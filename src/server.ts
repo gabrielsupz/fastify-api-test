@@ -15,6 +15,7 @@ import fastifySwaggerUi from '@fastify/swagger-ui'
 
 import { errorHandler } from './plugins/error-handler'
 import { authRoutes } from './routes/auth'
+import { ollamaTestRoute } from './test/ollama'
 
 export const app = fastify().withTypeProvider<ZodTypeProvider>()
 
@@ -43,6 +44,7 @@ app.register(fastifySwagger, {
 })
 
 app.register(authRoutes)
+app.register(ollamaTestRoute)
 
 app.setErrorHandler(errorHandler)
 
