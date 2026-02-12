@@ -14,10 +14,14 @@ import fjwt, { FastifyJWT } from '@fastify/jwt'
 import fastifySwagger from '@fastify/swagger'
 import fastifySwaggerUi from '@fastify/swagger-ui'
 
-import { errorHandler } from './plugins/error-handler'
-import { authRoutes } from './routes/auth'
-import { healthcheckRoutes } from './test/health-check'
-import { ollamaTestRoute } from './test/ollama'
+import { errorHandler } from '@/plugins/error-handler'
+
+import { ollamaRoutes } from '@/modules/ollama/routes'
+import { userRoutes } from '@/modules/user/routes'
+
+import { healthcheckRoutes } from '@/test/health-check'
+
+import { env } from '@/env'
 
 const listeners = ['SIGINT', 'SIGTERM']
 listeners.forEach(signal => {
@@ -33,20 +37,18 @@ app.setValidatorCompiler(validatorCompiler)
 app.setSerializerCompiler(serializerCompiler)
 
 app.register(fastifyCors, {
-  origin: 'true',
+  origin: true,
   methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
 })
 
-app.register(fjwt, { secret: 'supersecretcode-CHANGE_THIS-USE_ENV_FILE' })
+app.register(fjwt, { secret: env.JWT_SECRET })
 
 app.addHook('preHandler', (req, res, next) => {
-  // here we are
   req.jwt = app.jwt
   return next()
 })
 
-// cookies
 app.register(fCookie, {
   secret: 'some-secret-key',
   hook: 'preHandler',
@@ -60,7 +62,6 @@ app.decorate(
     if (!token) {
       return reply.status(401).send({ message: 'Authentication required' })
     }
-    // aqui, decoded será um tipo diferente por padrão, mas queremos que seja do tipo user-payload
     const decoded = req.jwt.verify<FastifyJWT['user']>(token)
     req.user = decoded
   },
@@ -85,8 +86,8 @@ app.register(fastifySwagger, {
   transform: jsonSchemaTransform,
 })
 
-app.register(authRoutes)
-app.register(ollamaTestRoute)
+app.register(userRoutes, { prefix: 'user' })
+app.register(ollamaRoutes, { prefix: 'ollama' })
 app.register(healthcheckRoutes)
 
 app.setErrorHandler(errorHandler)

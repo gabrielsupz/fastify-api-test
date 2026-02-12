@@ -62,12 +62,28 @@ export default defineConfig([
               position: 'after',
             },
             {
+              pattern: '@/env/**',
+              group: 'internal',
+              position: 'after',
+            },
+            {
               pattern: '@/config/**',
               group: 'internal',
               position: 'after',
             },
             {
               pattern: '@/plugins/**',
+              group: 'internal',
+              position: 'after',
+            },
+
+            {
+              pattern: '@/modules/**',
+              group: 'internal',
+              position: 'after',
+            },
+            {
+              pattern: '@/test/**',
               group: 'internal',
               position: 'after',
             },
