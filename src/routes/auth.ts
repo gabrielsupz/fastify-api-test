@@ -1,9 +1,12 @@
 import type { FastifyInstance } from 'fastify'
 
-import { hashPassword } from '@/utils/password'
+import { logout } from '@/controllers/user.controller'
+
+import { comparePassword, hashPassword } from '@/utils/password'
 import {
   loginBodySchema,
   LoginBodySchemaType,
+  loginResponseSchema,
   registerBodySchema,
   RegisterBodySchemaType,
   userResponseSchema,
@@ -59,7 +62,7 @@ export async function authRoutes(app: FastifyInstance) {
         tags: ['auth'],
         body: loginBodySchema,
         response: {
-          200: userResponseSchema,
+          200: loginResponseSchema,
           401: apiErrorSchema,
         },
       },
@@ -69,9 +72,60 @@ export async function authRoutes(app: FastifyInstance) {
 
       const user = UsersRepository.findByEmail(email)
 
-      if (!user || user.password !== password) {
+      if (!user) {
         return reply.status(401).send({
           message: 'Invalid credentials',
+        })
+      }
+
+      const passwordMatch = await comparePassword(password, user.password)
+
+      if (!passwordMatch) {
+        return reply.status(401).send({
+          message: 'Invalid credentials',
+        })
+      }
+
+      const token = request.jwt.sign({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      })
+
+      reply.setCookie('access_token', token, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+      })
+
+      return { accessToken: token }
+    },
+  )
+
+  app.get(
+    '/users/me',
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        tags: ['users'],
+
+        security: [{ cookieAuth: [] }],
+        response: {
+          200: userResponseSchema,
+          401: apiErrorSchema,
+          403: apiErrorSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const userId = request.user.sub
+      console.log(request.user)
+      const user = UsersRepository.findById(userId)
+
+      if (!user) {
+        return reply.status(401).send({
+          message: 'User not found',
         })
       }
 
@@ -82,4 +136,6 @@ export async function authRoutes(app: FastifyInstance) {
       })
     },
   )
+
+  app.delete('/logout', { preHandler: [app.authenticate] }, logout)
 }
