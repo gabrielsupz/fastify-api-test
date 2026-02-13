@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto'
-
 import { FastifyReply, FastifyRequest } from 'fastify'
 
 import axios from 'axios'
@@ -9,7 +7,7 @@ import {
   DeleteConversationParamsSchemaType,
 } from '@/utils/zod/ollama'
 
-import { inMemoryChatContext } from './im-memory-chat-context'
+import { ConversationsRepository } from './repository'
 
 import { env } from '@/env'
 
@@ -33,8 +31,12 @@ export async function ollamaTest() {
   }
 }
 
-export async function getAllConversations() {
-  const conversations = inMemoryChatContext.getAllConversations()
+export async function getAllUserConversations(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const userId = request.user.id
+  const conversations = await ConversationsRepository.getAll(userId)
 
   return conversations
 }
@@ -43,12 +45,15 @@ export async function createConversation(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const conversationId = randomUUID()
+  const userId = request.user.id
 
-  inMemoryChatContext.createConversation(
-    conversationId,
+  const conversation = await ConversationsRepository.create(
+    userId,
     'Você é um assistente inteligente e responde de forma clara.',
   )
+
+  const conversationId = conversation._id.toString()
+  console.log(conversationId)
 
   return reply.status(201).send({
     conversationId,
@@ -61,15 +66,19 @@ export async function sendChatMessage(
 ) {
   const { conversationId, message } = request.body as ChatBodySchemaType
 
-  inMemoryChatContext.addMessage(conversationId, 'user', message)
+  const conversation = await ConversationsRepository.findById(conversationId)
 
-  const messages = inMemoryChatContext.getMessages(conversationId)
+  if (!conversation) {
+    return reply.status(404).send({ message: 'Conversation not found' })
+  }
+
+  await ConversationsRepository.addMessage(conversationId, 'user', message)
 
   const response = await axios.post(
     `${ollamaApiUrl}/chat`,
     {
       model: ollamaModel,
-      messages,
+      messages: conversation.messages,
       stream: false,
     },
     { timeout: 60_000 },
@@ -77,18 +86,21 @@ export async function sendChatMessage(
 
   const assistantReply = response.data.message.content
 
-  inMemoryChatContext.addMessage(conversationId, 'assistant', assistantReply)
+  await ConversationsRepository.addMessage(
+    conversationId,
+    'assistant',
+    assistantReply,
+  )
 
   return {
     response: assistantReply,
-    contextSize: messages.length,
   }
 }
 
 export async function deleteConversation(request: FastifyRequest) {
   const { id } = request.params as DeleteConversationParamsSchemaType
 
-  inMemoryChatContext.clearConversation(id)
+  await ConversationsRepository.delete(id)
 
   return { success: true }
 }

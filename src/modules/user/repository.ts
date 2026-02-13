@@ -1,37 +1,16 @@
-import { randomUUID } from 'crypto'
-
-export type User = {
-  id: string
-  name: string
-  email: string
-  password: string
-}
-
-const users: User[] = [
-  {
-    id: '1',
-    email: 'user@example.com',
-    password: '$2b$10$X6tU1Qj/x.pECP6THZ/meO/JbzhmzJ.Tonch0UlwGd50hDMX.aY3e', //123
-    name: 'Gabriel Suptitz',
-  },
-]
+import { UserModel } from './model'
 
 export const UsersRepository = {
-  create(data: Omit<User, 'id'>) {
-    const user = {
-      id: randomUUID(),
-      ...data,
-    }
-
-    users.push(user)
+  async create(data: { name: string; email: string; password: string }) {
+    const user = await UserModel.create(data)
     return user
   },
 
-  findById(id: string) {
-    return users.find(user => user.id === id)
+  async findById(id: string) {
+    return UserModel.findById(id)
   },
 
-  findByEmail(email: string) {
-    return users.find(user => user.email === email)
+  async findByEmail(email: string) {
+    return UserModel.findOne({ email })
   },
 }

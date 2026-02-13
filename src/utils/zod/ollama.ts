@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const createConversationResponseSchema = z.object({
-  conversationId: z.string().uuid(),
+  conversationId: z.string(),
 })
 
 export type CreateConversationResponseSchemaType = z.infer<
@@ -15,7 +15,7 @@ export const messageSchema = z.object({
 
 export const getAllConversationsResponseSchema = z.array(
   z.object({
-    conversationId: z.string().uuid(),
+    conversationId: z.string(),
     messages: z.array(messageSchema),
   }),
 )
@@ -25,9 +25,7 @@ export type GetAllConversationsResponseSchemaType = z.infer<
 >
 
 export const chatBodySchema = z.object({
-  conversationId: z.string().uuid({
-    message: 'conversationId deve ser um UUID válido',
-  }),
+  conversationId: z.string(),
   message: z
     .string()
     .min(1, 'Mensagem é obrigatória')
@@ -38,15 +36,12 @@ export type ChatBodySchemaType = z.infer<typeof chatBodySchema>
 
 export const chatResponseSchema = z.object({
   response: z.string(),
-  contextSize: z.number(),
 })
 
 export type ChatResponseSchemaType = z.infer<typeof chatResponseSchema>
 
 export const deleteConversationParamsSchema = z.object({
-  id: z.string().uuid({
-    message: 'ID deve ser um UUID válido',
-  }),
+  id: z.string(),
 })
 
 export type DeleteConversationParamsSchemaType = z.infer<

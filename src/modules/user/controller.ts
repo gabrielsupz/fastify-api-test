@@ -11,7 +11,7 @@ export async function registerUser(
 ) {
   const { name, email, password } = request.body as RegisterBodySchemaType
 
-  const userAlreadyExists = UsersRepository.findByEmail(email)
+  const userAlreadyExists = await UsersRepository.findByEmail(email)
 
   if (userAlreadyExists) {
     return reply.status(409).send({
@@ -21,7 +21,7 @@ export async function registerUser(
 
   const passwordHash = await hashPassword(password)
 
-  const user = UsersRepository.create({
+  const user = await UsersRepository.create({
     name,
     email,
     password: passwordHash,
@@ -37,7 +37,7 @@ export async function registerUser(
 export async function login(request: FastifyRequest, reply: FastifyReply) {
   const { email, password } = request.body as LoginBodySchemaType
 
-  const user = UsersRepository.findByEmail(email)
+  const user = await UsersRepository.findByEmail(email)
 
   if (!user) {
     return reply.status(401).send({
@@ -80,7 +80,7 @@ export async function getMyUserData(
 ) {
   const userId = request.user.id
 
-  const user = UsersRepository.findById(userId)
+  const user = await UsersRepository.findById(userId)
 
   if (!user) {
     return reply.status(401).send({

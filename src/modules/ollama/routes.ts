@@ -13,7 +13,7 @@ import {
 import {
   createConversation,
   deleteConversation,
-  getAllConversations,
+  getAllUserConversations,
   ollamaTest,
   sendChatMessage,
 } from './controller'
@@ -37,21 +37,26 @@ export async function ollamaRoutes(app: FastifyInstance) {
   app.get(
     '/conversations',
     {
+      preHandler: [app.authenticate],
       schema: {
         tags: [ROUTE_TAG],
+
+        security: [{ cookieAuth: [] }],
         response: {
           200: getAllConversationsResponseSchema,
         },
       },
     },
-    getAllConversations,
+    getAllUserConversations,
   )
 
   app.post(
     '/conversation',
     {
+      preHandler: [app.authenticate],
       schema: {
         tags: [ROUTE_TAG],
+        security: [{ cookieAuth: [] }],
         response: {
           201: createConversationResponseSchema,
         },
@@ -63,8 +68,11 @@ export async function ollamaRoutes(app: FastifyInstance) {
   app.post(
     '/chat',
     {
+      preHandler: [app.authenticate],
       schema: {
         tags: [ROUTE_TAG],
+
+        security: [{ cookieAuth: [] }],
         body: chatBodySchema,
         response: {
           200: chatResponseSchema,
@@ -77,8 +85,11 @@ export async function ollamaRoutes(app: FastifyInstance) {
   app.delete(
     '/conversation/:id',
     {
+      preHandler: [app.authenticate],
       schema: {
         tags: [ROUTE_TAG],
+
+        security: [{ cookieAuth: [] }],
         params: deleteConversationParamsSchema,
         response: {
           200: deleteConversationResponseSchema,
