@@ -78,8 +78,8 @@ export async function getMyUserData(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const userId = request.user.sub
-  console.log(request.user)
+  const userId = request.user.id
+
   const user = UsersRepository.findById(userId)
 
   if (!user) {

@@ -1,8 +1,4 @@
-import { randomUUID } from 'crypto'
-
 import type { FastifyInstance } from 'fastify'
-
-import axios from 'axios'
 
 import {
   chatBodySchema,
@@ -12,18 +8,17 @@ import {
   deleteConversationResponseSchema,
   getAllConversationsResponseSchema,
   testResponseSchema,
-  type ChatBodySchemaType,
-  type DeleteConversationParamsSchemaType,
 } from '@/utils/zod/ollama'
 
-import { inMemoryChatContext } from './im-memory-chat-context'
-
-import { env } from '@/env'
+import {
+  createConversation,
+  deleteConversation,
+  getAllConversations,
+  ollamaTest,
+  sendChatMessage,
+} from './controller'
 
 const ROUTE_TAG = 'ollama'
-
-const ollamaApiUrl = env.OLLAMA_API_URL
-const ollamaModel = env.OLLAMA_MODEL
 
 export async function ollamaRoutes(app: FastifyInstance) {
   app.get(
@@ -36,23 +31,7 @@ export async function ollamaRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      const response = await axios.post(
-        `${ollamaApiUrl}/generate`,
-        {
-          model: ollamaModel,
-          prompt:
-            'Responda com OK se estiver funcionando e envia a frase do dia.',
-          stream: false,
-        },
-        { timeout: 60_000 },
-      )
-
-      return {
-        success: true,
-        response: response.data.response,
-      }
-    },
+    ollamaTest,
   )
 
   app.get(
@@ -65,11 +44,7 @@ export async function ollamaRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      const conversations = inMemoryChatContext.getAllConversations()
-
-      return conversations
-    },
+    getAllConversations,
   )
 
   app.post(
@@ -82,18 +57,7 @@ export async function ollamaRoutes(app: FastifyInstance) {
         },
       },
     },
-    async (_, reply) => {
-      const conversationId = randomUUID()
-
-      inMemoryChatContext.createConversation(
-        conversationId,
-        'Você é um assistente inteligente e responde de forma clara.',
-      )
-
-      return reply.status(201).send({
-        conversationId,
-      })
-    },
+    createConversation,
   )
 
   app.post(
@@ -107,36 +71,7 @@ export async function ollamaRoutes(app: FastifyInstance) {
         },
       },
     },
-    async request => {
-      const { conversationId, message } = request.body as ChatBodySchemaType
-
-      inMemoryChatContext.addMessage(conversationId, 'user', message)
-
-      const messages = inMemoryChatContext.getMessages(conversationId)
-
-      const response = await axios.post(
-        `${ollamaApiUrl}/chat`,
-        {
-          model: ollamaModel,
-          messages,
-          stream: false,
-        },
-        { timeout: 60_000 },
-      )
-
-      const assistantReply = response.data.message.content
-
-      inMemoryChatContext.addMessage(
-        conversationId,
-        'assistant',
-        assistantReply,
-      )
-
-      return {
-        response: assistantReply,
-        contextSize: messages.length,
-      }
-    },
+    sendChatMessage,
   )
 
   app.delete(
@@ -150,12 +85,6 @@ export async function ollamaRoutes(app: FastifyInstance) {
         },
       },
     },
-    async request => {
-      const { id } = request.params as DeleteConversationParamsSchemaType
-
-      inMemoryChatContext.clearConversation(id)
-
-      return { success: true }
-    },
+    deleteConversation,
   )
 }
