@@ -14,6 +14,7 @@ import {
   getConversationByIdResponseSchema,
   testResponseSchema,
 } from '@/utils/zod/ollama'
+import { paginationSchema } from '@/utils/zod/pagination'
 
 import {
   createConversation,
@@ -21,6 +22,7 @@ import {
   favoriteConversation,
   getAllUserConversations,
   getConversationById,
+  getConversationMessages,
   ollamaTest,
   sendChatMessage,
   unfavoriteConversation,
@@ -75,6 +77,20 @@ export async function ollamaRoutes(app: FastifyInstance) {
       },
     },
     getConversationById,
+  )
+
+  app.get(
+    '/conversations/:id/messages',
+    {
+      preHandler: [app.authenticate],
+      schema: {
+        tags: [ROUTE_TAG],
+        security: [{ cookieAuth: [] }],
+        params: getConversationByIdParamsSchema,
+        querystring: paginationSchema,
+      },
+    },
+    getConversationMessages,
   )
 
   app.post(

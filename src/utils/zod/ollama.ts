@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import z from 'zod'
 
 export const messageSchema = z.object({
   role: z.enum(['system', 'user', 'assistant']),
@@ -55,6 +55,16 @@ export type GetConversationByIdParamsSchemaType = z.infer<
 export type GetConversationByIdResponseSchemaType = z.infer<
   typeof getConversationByIdResponseSchema
 >
+
+export const getConversationMessagesResponseSchema = z.object({
+  total: z.number(),
+  messages: z.array(
+    z.object({
+      role: z.enum(['user', 'assistant']),
+      content: z.string(),
+    }),
+  ),
+})
 
 export const chatBodySchema = z.object({
   conversationId: z.string(),

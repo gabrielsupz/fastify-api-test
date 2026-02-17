@@ -9,6 +9,7 @@ import {
   FavoriteConversationSchemaType,
   GetConversationByIdParamsSchemaType,
 } from '@/utils/zod/ollama'
+import { PaginationSchemaType } from '@/utils/zod/pagination'
 
 import { ConversationsRepository } from './repository'
 
@@ -65,6 +66,32 @@ export async function getConversationById(
     id: conversation._id.toString(),
     userId: conversation.userId.toString(),
   })
+}
+
+export async function getConversationMessages(
+  request: FastifyRequest<{
+    Params: GetConversationByIdParamsSchemaType
+    Querystring: PaginationSchemaType
+  }>,
+  reply: FastifyReply,
+) {
+  const { id } = request.params
+  const { page, size } = request.query
+  const userId = request.user.id
+
+  const result = await ConversationsRepository.findMessagesByConversationId(
+    id,
+    userId,
+    page,
+    size,
+  )
+
+  if (!result) {
+    return reply.status(404).send({ message: 'Conversation not found' })
+  }
+
+  console.log(result)
+  return reply.status(200).send(result)
 }
 
 export async function createConversation(
