@@ -6,3 +6,14 @@ export const paginationSchema = z.object({
 })
 
 export type PaginationSchemaType = z.infer<typeof paginationSchema>
+
+export const createPaginatedResponseSchema = <T extends z.ZodTypeAny>(
+  contentSchema: T,
+) =>
+  z.object({
+    page: z.number(),
+    size: z.number(),
+    total: z.number(),
+    totalPages: z.number(),
+    content: z.array(contentSchema),
+  })

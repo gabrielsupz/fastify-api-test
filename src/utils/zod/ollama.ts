@@ -1,7 +1,14 @@
 import z from 'zod'
 
+import { createPaginatedResponseSchema } from './pagination'
+
 export const messageSchema = z.object({
   role: z.enum(['system', 'user', 'assistant']),
+  content: z.string(),
+})
+
+export const messageResponseSchema = z.object({
+  role: z.enum(['user', 'assistant']),
   content: z.string(),
 })
 
@@ -56,15 +63,9 @@ export type GetConversationByIdResponseSchemaType = z.infer<
   typeof getConversationByIdResponseSchema
 >
 
-export const getConversationMessagesResponseSchema = z.object({
-  total: z.number(),
-  messages: z.array(
-    z.object({
-      role: z.enum(['user', 'assistant']),
-      content: z.string(),
-    }),
-  ),
-})
+export const paginatedMessagesResponseSchema = createPaginatedResponseSchema(
+  messageResponseSchema,
+)
 
 export const chatBodySchema = z.object({
   conversationId: z.string(),

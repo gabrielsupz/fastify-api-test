@@ -77,6 +77,7 @@ export async function getConversationMessages(
 ) {
   const { id } = request.params
   const { page, size } = request.query
+
   const userId = request.user.id
 
   const result = await ConversationsRepository.findMessagesByConversationId(
@@ -90,8 +91,9 @@ export async function getConversationMessages(
     return reply.status(404).send({ message: 'Conversation not found' })
   }
 
-  console.log(result)
-  return reply.status(200).send(result)
+  const { messages, ...rest } = result
+
+  return reply.status(200).send({ ...rest, content: messages })
 }
 
 export async function createConversation(

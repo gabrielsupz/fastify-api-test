@@ -12,6 +12,7 @@ import {
   getAllConversationsResponseSchema,
   getConversationByIdParamsSchema,
   getConversationByIdResponseSchema,
+  paginatedMessagesResponseSchema,
   testResponseSchema,
 } from '@/utils/zod/ollama'
 import { paginationSchema } from '@/utils/zod/pagination'
@@ -88,6 +89,11 @@ export async function ollamaRoutes(app: FastifyInstance) {
         security: [{ cookieAuth: [] }],
         params: getConversationByIdParamsSchema,
         querystring: paginationSchema,
+        response: {
+          200: paginatedMessagesResponseSchema,
+          401: apiErrorSchema,
+          404: apiErrorSchema,
+        },
       },
     },
     getConversationMessages,
