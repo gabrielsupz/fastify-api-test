@@ -58,7 +58,6 @@ app.decorate(
   'authenticate',
   async (req: FastifyRequest, reply: FastifyReply) => {
     const token = req.cookies.access_token
-    console.log('cookies:', req.cookies)
     if (!token) {
       return reply.status(401).send({ message: 'Authentication required' })
     }

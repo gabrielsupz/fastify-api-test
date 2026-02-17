@@ -5,6 +5,8 @@ import { LoginBodySchemaType, RegisterBodySchemaType } from '@/utils/zod/user'
 
 import { UsersRepository } from './repository'
 
+import { env } from '@/env'
+
 export async function registerUser(
   request: FastifyRequest,
   reply: FastifyReply,
@@ -53,17 +55,25 @@ export async function login(request: FastifyRequest, reply: FastifyReply) {
     })
   }
 
-  const token = request.jwt.sign({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-  })
+  const expires = env.JWT_EXPIRES_IN
+
+  const token = request.jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    },
+    {
+      expires,
+    },
+  )
 
   reply.setCookie('access_token', token, {
     path: '/',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
+    maxAge: 86400,
   })
 
   return { accessToken: token }
